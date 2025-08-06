@@ -345,9 +345,9 @@ class WhatsAppController {
         logger.info('ℹ️ No se procesaron mensajes del webhook');
       }
 
-      // Enviar respuesta correcta a Twilio
+      // Enviar respuesta vacía a Twilio
       res.setHeader('Content-Type', 'text/plain');
-      res.status(200).send('OK');
+      res.status(200).send('');
     } catch (error) {
       logger.error('❌ Error procesando webhook:', error);
       next(error);
