@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const twilioService = require('../services/twilioService');
+const webhookRouter = require('../services/webhookRouter');
 const logger = require('../utils/logger');
 
 // Validación para envío de mensajes
@@ -314,7 +315,7 @@ class WhatsAppController {
       if (processedMessages && processedMessages.length > 0) {
         logger.info('✅ Mensajes procesados:', JSON.stringify(processedMessages, null, 2));
         
-        // Log detallado de cada mensaje
+        // Procesar cada mensaje y enviar a n8n
         for (const message of processedMessages) {
           logger.info(`📱 MENSAJE RECIBIDO:`);
           logger.info(`   👤 De: ${message.from}`);
@@ -323,9 +324,21 @@ class WhatsAppController {
           logger.info(`   🆔 Message ID: ${message.messageId}`);
           logger.info(`   📋 Tipo: ${message.type}`);
           logger.info(`   ──────────────────────────────`);
+
+          // Enviar a n8n para procesamiento
+          try {
+            const n8nResult = await webhookRouter.sendToN8n(message.from, message);
+            if (n8nResult.success) {
+              logger.info(`✅ Mensaje enviado a n8n exitosamente`);
+            } else {
+              logger.warn(`⚠️ Error enviando a n8n: ${n8nResult.error}`);
+            }
+          } catch (n8nError) {
+            logger.error(`❌ Error enviando a n8n:`, n8nError);
+          }
         }
         
-        logger.info('🎯 Mensajes procesados sin respuesta automática');
+        logger.info('🎯 Mensajes procesados y enviados a n8n');
       } else {
         logger.info('ℹ️ No se procesaron mensajes del webhook');
       }
@@ -349,12 +362,116 @@ class WhatsAppController {
         'Envío de documentos',
         'Envío de ubicaciones (como texto)',
         'Procesamiento de webhooks',
-        'Respuestas automáticas'
+        'Integración con n8n',
+        'Webhooks dinámicos por número'
       ];
+
+      // Añadir información de webhooks configurados
+      status.n8nWebhooks = webhookRouter.getWebhookConfigs();
 
       res.status(200).json({
         success: true,
         data: status
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Obtener configuraciones de webhook
+  async getWebhookConfigs(req, res, next) {
+    try {
+      const configs = webhookRouter.getWebhookConfigs();
+      
+      res.status(200).json({
+        success: true,
+        data: configs
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Añadir configuración de webhook
+  async addWebhookConfig(req, res, next) {
+    try {
+      const { phoneNumber, webhookUrl, name } = req.body;
+      
+      if (!phoneNumber || !webhookUrl) {
+        return res.status(400).json({
+          success: false,
+          error: 'phoneNumber y webhookUrl son requeridos'
+        });
+      }
+
+      const config = webhookRouter.addWebhookConfig(phoneNumber, webhookUrl, name);
+      
+      res.status(201).json({
+        success: true,
+        data: config,
+        message: 'Webhook configurado exitosamente'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Actualizar configuración de webhook
+  async updateWebhookConfig(req, res, next) {
+    try {
+      const { phoneNumber } = req.params;
+      const updates = req.body;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({
+          success: false,
+          error: 'phoneNumber es requerido'
+        });
+      }
+
+      const config = webhookRouter.updateWebhookConfig(phoneNumber, updates);
+      
+      if (!config) {
+        return res.status(404).json({
+          success: false,
+          error: 'Webhook no encontrado'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: config,
+        message: 'Webhook actualizado exitosamente'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Eliminar configuración de webhook
+  async removeWebhookConfig(req, res, next) {
+    try {
+      const { phoneNumber } = req.params;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({
+          success: false,
+          error: 'phoneNumber es requerido'
+        });
+      }
+
+      const removed = webhookRouter.removeWebhookConfig(phoneNumber);
+      
+      if (!removed) {
+        return res.status(404).json({
+          success: false,
+          error: 'Webhook no encontrado'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Webhook eliminado exitosamente'
       });
     } catch (error) {
       next(error);
