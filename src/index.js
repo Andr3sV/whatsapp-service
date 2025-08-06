@@ -128,11 +128,7 @@ app.post('/webhook', async (req, res) => {
     const whatsappController = require('./controllers/whatsappController');
     await whatsappController.processWebhook(req, res);
     
-    // Asegurar que siempre respondamos correctamente
-    if (!res.headersSent) {
-      res.setHeader('Content-Type', 'text/plain');
-      res.status(200).send('OK');
-    }
+    // NO enviar respuesta aquí - el controlador debe manejar la respuesta
     
   } catch (error) {
     console.log('❌ ERROR EN WEBHOOK:', error.message);
