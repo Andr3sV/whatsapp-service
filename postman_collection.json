@@ -1,0 +1,254 @@
+{
+  "info": {
+    "name": "WhatsApp Business API Service",
+    "description": "Colección de Postman para el servicio de WhatsApp Business API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Service Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "status"]
+        }
+      }
+    },
+    {
+      "name": "Phone Number Info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/phone-info",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "phone-info"]
+        }
+      }
+    },
+    {
+      "name": "Get Templates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/templates",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "templates"]
+        }
+      }
+    },
+    {
+      "name": "Send Text Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"{{phoneNumber}}\",\n  \"text\": \"¡Hola! Este es un mensaje de prueba desde el servicio de WhatsApp.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/send/text",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "send", "text"]
+        }
+      }
+    },
+    {
+      "name": "Send Button Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"{{phoneNumber}}\",\n  \"text\": \"¿Te gustaría recibir más información sobre nuestros servicios?\",\n  \"buttons\": [\n    {\n      \"title\": \"Sí, por favor\"\n    },\n    {\n      \"title\": \"No, gracias\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/send/button",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "send", "button"]
+        }
+      }
+    },
+    {
+      "name": "Send List Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"{{phoneNumber}}\",\n  \"text\": \"Selecciona el servicio que te interesa:\",\n  \"sections\": [\n    {\n      \"title\": \"Servicios Disponibles\",\n      \"rows\": [\n        {\n          \"id\": \"consultoria\",\n          \"title\": \"Consultoría\",\n          \"description\": \"Servicios de consultoría empresarial\"\n        },\n        {\n          \"id\": \"desarrollo\",\n          \"title\": \"Desarrollo\",\n          \"description\": \"Desarrollo de software a medida\"\n        },\n        {\n          \"id\": \"marketing\",\n          \"title\": \"Marketing Digital\",\n          \"description\": \"Estrategias de marketing digital\"\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/send/list",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "send", "list"]
+        }
+      }
+    },
+    {
+      "name": "Send Image Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"{{phoneNumber}}\",\n  \"imageUrl\": \"https://via.placeholder.com/300x200/007bff/ffffff?text=Imagen+de+Prueba\",\n  \"caption\": \"Esta es una imagen de prueba enviada desde el servicio de WhatsApp.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/send/image",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "send", "image"]
+        }
+      }
+    },
+    {
+      "name": "Send Document Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"{{phoneNumber}}\",\n  \"documentUrl\": \"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf\",\n  \"filename\": \"documento_ejemplo.pdf\",\n  \"caption\": \"Aquí tienes el documento solicitado.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/send/document",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "send", "document"]
+        }
+      }
+    },
+    {
+      "name": "Send Location Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"{{phoneNumber}}\",\n  \"latitude\": 40.4168,\n  \"longitude\": -3.7038,\n  \"name\": \"Oficina Principal\",\n  \"address\": \"Calle Mayor, 123, Madrid, España\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/send/location",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "send", "location"]
+        }
+      }
+    },
+    {
+      "name": "Send Template Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"{{phoneNumber}}\",\n  \"templateName\": \"hello_world\",\n  \"language\": \"es\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/send/template",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "send", "template"]
+        }
+      }
+    },
+    {
+      "name": "Mark Message as Read",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/messages/{{messageId}}/read",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "messages", "{{messageId}}", "read"]
+        }
+      }
+    },
+    {
+      "name": "Process Webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"123456789\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": {\n              \"display_phone_number\": \"34612345678\",\n              \"phone_number_id\": \"987654321\"\n            },\n            \"contacts\": [\n              {\n                \"profile\": {\n                  \"name\": \"Usuario Ejemplo\"\n                },\n                \"wa_id\": \"34612345678\"\n              }\n            ],\n            \"messages\": [\n              {\n                \"from\": \"34612345678\",\n                \"id\": \"wamid.123456789\",\n                \"timestamp\": \"1234567890\",\n                \"text\": {\n                  \"body\": \"Hola, este es un mensaje de prueba\"\n                },\n                \"type\": \"text\"\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/whatsapp/webhook",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "whatsapp", "webhook"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "phoneNumber",
+      "value": "34612345678",
+      "type": "string"
+    },
+    {
+      "key": "messageId",
+      "value": "wamid.123456789",
+      "type": "string"
+    }
+  ]
+} 
