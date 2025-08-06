@@ -116,9 +116,7 @@ app.post('/webhook', async (req, res) => {
     const whatsappController = require('./controllers/whatsappController');
     await whatsappController.processWebhook(req, res);
     
-    // Cambiar Content-Type para Twilio
-    res.setHeader('Content-Type', 'text/plain');
-    res.status(200).send('OK');
+    // El controlador ya envía la respuesta, no necesitamos enviar otra
     
   } catch (error) {
     console.log('❌ ERROR EN WEBHOOK:', error.message);

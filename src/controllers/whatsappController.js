@@ -330,10 +330,8 @@ class WhatsAppController {
         logger.info('ℹ️ No se procesaron mensajes del webhook');
       }
 
-      res.status(200).json({
-        success: true,
-        message: 'Webhook procesado exitosamente'
-      });
+      res.setHeader('Content-Type', 'text/plain');
+      res.status(200).send('OK');
     } catch (error) {
       logger.error('❌ Error procesando webhook:', error);
       next(error);
