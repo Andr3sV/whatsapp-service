@@ -122,6 +122,8 @@ app.post('/webhook', async (req, res) => {
       return res.status(200).send('OK');
     }
     
+    logger.info('✅ Mensaje entrante detectado, procesando...');
+    
     // Procesar el mensaje usando el controlador
     const whatsappController = require('./controllers/whatsappController');
     await whatsappController.processWebhook(req, res);
