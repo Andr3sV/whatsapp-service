@@ -134,7 +134,7 @@ app.post('/webhook', async (req, res) => {
     console.log('❌ ERROR EN WEBHOOK:', error.message);
     logger.error('❌ Error procesando webhook:', error);
     res.setHeader('Content-Type', 'text/plain');
-    res.status(500).send('');
+    res.status(500).send('Error');
   }
 });
 
