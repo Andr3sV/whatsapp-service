@@ -4,6 +4,7 @@ const logger = require('../utils/logger');
 class WebhookRouter {
   constructor() {
     this.webhookConfigs = new Map();
+    this.processedMessages = new Set(); // Para deduplicación
     this.loadWebhookConfigs();
   }
 
@@ -45,11 +46,27 @@ class WebhookRouter {
     }
   }
 
+  // Verificar si un mensaje ya fue procesado
+  isMessageProcessed(messageId) {
+    return this.processedMessages.has(messageId);
+  }
+
+  // Marcar mensaje como procesado
+  markMessageAsProcessed(messageId) {
+    this.processedMessages.add(messageId);
+
+    // Limpiar mensajes antiguos (mantener solo los últimos 1000)
+    if (this.processedMessages.size > 1000) {
+      const messagesArray = Array.from(this.processedMessages);
+      this.processedMessages = new Set(messagesArray.slice(-500));
+    }
+  }
+
   // Obtener webhook para un número específico
   getWebhookForNumber(phoneNumber) {
     // Limpiar el número (quitar whatsapp: si existe)
     const cleanNumber = phoneNumber.replace('whatsapp:', '');
-    
+
     // Buscar configuración exacta
     if (this.webhookConfigs.has(cleanNumber)) {
       const config = this.webhookConfigs.get(cleanNumber);
@@ -71,8 +88,14 @@ class WebhookRouter {
   // Enviar mensaje a n8n
   async sendToN8n(phoneNumber, messageData) {
     try {
+      // Verificar si el mensaje ya fue procesado
+      if (this.isMessageProcessed(messageData.messageId)) {
+        logger.info(`🔄 Mensaje ${messageData.messageId} ya procesado, saltando...`);
+        return { success: true, skipped: true, reason: 'already_processed' };
+      }
+
       const webhookConfig = this.getWebhookForNumber(phoneNumber);
-      
+
       if (!webhookConfig) {
         logger.warn(`⚠️ No hay webhook configurado para ${phoneNumber}`);
         return { success: false, error: 'No webhook configured' };
@@ -96,6 +119,9 @@ class WebhookRouter {
         },
         timeout: 10000 // 10 segundos
       });
+
+      // Marcar mensaje como procesado solo si se envió exitosamente
+      this.markMessageAsProcessed(messageData.messageId);
 
       logger.info(`✅ n8n respondió (${webhookConfig.name}): ${response.status}`);
       return { success: true, response: response.data };
@@ -128,7 +154,7 @@ class WebhookRouter {
 
     this.webhookConfigs.set(phoneNumber, config);
     logger.info(`📡 Nuevo webhook añadido para ${phoneNumber}: ${config.name}`);
-    
+
     return config;
   }
 
@@ -138,11 +164,11 @@ class WebhookRouter {
       const currentConfig = this.webhookConfigs.get(phoneNumber);
       const updatedConfig = { ...currentConfig, ...updates };
       this.webhookConfigs.set(phoneNumber, updatedConfig);
-      
+
       logger.info(`📡 Webhook actualizado para ${phoneNumber}: ${updatedConfig.name}`);
       return updatedConfig;
     }
-    
+
     return null;
   }
 
@@ -153,7 +179,7 @@ class WebhookRouter {
       logger.info(`📡 Webhook eliminado para ${phoneNumber}`);
       return true;
     }
-    
+
     return false;
   }
 }
