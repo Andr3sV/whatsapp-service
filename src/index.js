@@ -106,6 +106,10 @@ app.get('/webhook', (req, res) => {
 // Ruta para recibir webhooks de Twilio
 app.post('/webhook', async (req, res) => {
   try {
+    console.log('🔔 WEBHOOK RECIBIDO - TIMESTAMP:', new Date().toISOString());
+    console.log('🔔 WEBHOOK RECIBIDO - HEADERS:', JSON.stringify(req.headers, null, 2));
+    console.log('🔔 WEBHOOK RECIBIDO - BODY:', JSON.stringify(req.body, null, 2));
+    
     logger.info('📥 Webhook POST recibido de Twilio:', JSON.stringify(req.body, null, 2));
     
     // Procesar el mensaje usando el controlador
@@ -113,6 +117,7 @@ app.post('/webhook', async (req, res) => {
     await whatsappController.processWebhook(req, res);
     
   } catch (error) {
+    console.log('❌ ERROR EN WEBHOOK:', error.message);
     logger.error('❌ Error procesando webhook:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
