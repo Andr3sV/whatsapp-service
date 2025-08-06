@@ -117,7 +117,7 @@ app.post('/webhook', async (req, res) => {
     const isIncomingMessage = webhookData.SmsStatus === 'received' && webhookData.Body;
     
     if (!isIncomingMessage) {
-      logger.info('ℹ️ Webhook de status update, respondiendosin procesar');
+      logger.info('ℹ️ Webhook de status update, respondiendo OK sin procesar');
       res.setHeader('Content-Type', 'text/plain');
       return res.status(200).send('OK');
     }
@@ -128,7 +128,11 @@ app.post('/webhook', async (req, res) => {
     const whatsappController = require('./controllers/whatsappController');
     await whatsappController.processWebhook(req, res);
     
-    // El controlador ya envía la respuesta, no necesitamos enviar otra
+    // Asegurar que siempre respondamos correctamente
+    if (!res.headersSent) {
+      res.setHeader('Content-Type', 'text/plain');
+      res.status(200).send('OK');
+    }
     
   } catch (error) {
     console.log('❌ ERROR EN WEBHOOK:', error.message);
