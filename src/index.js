@@ -117,9 +117,9 @@ app.post('/webhook', async (req, res) => {
     const isIncomingMessage = webhookData.SmsStatus === 'received' && webhookData.Body;
     
     if (!isIncomingMessage) {
-      logger.info('ℹ️ Webhook de status update, respondiendo OK sin procesar');
+      logger.info('ℹ️ Webhook de status update, respondiendo sin procesar');
       res.setHeader('Content-Type', 'text/plain');
-      return res.status(200).send('OK');
+      return res.status(200).send('');
     }
     
     logger.info('✅ Mensaje entrante detectado, procesando...');
@@ -134,7 +134,7 @@ app.post('/webhook', async (req, res) => {
     console.log('❌ ERROR EN WEBHOOK:', error.message);
     logger.error('❌ Error procesando webhook:', error);
     res.setHeader('Content-Type', 'text/plain');
-    res.status(500).send('Error');
+    res.status(500).send('');
   }
 });
 
