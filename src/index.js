@@ -103,6 +103,21 @@ app.get('/webhook', (req, res) => {
   }
 });
 
+// Ruta para recibir webhooks de Twilio
+app.post('/webhook', async (req, res) => {
+  try {
+    logger.info('📥 Webhook POST recibido de Twilio:', JSON.stringify(req.body, null, 2));
+    
+    // Procesar el mensaje usando el controlador
+    const whatsappController = require('./controllers/whatsappController');
+    await whatsappController.processWebhook(req, res);
+    
+  } catch (error) {
+    logger.error('❌ Error procesando webhook:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Middleware de manejo de errores
 app.use(errorHandler);
 
