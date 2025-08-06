@@ -345,11 +345,7 @@ class WhatsAppController {
         logger.info('ℹ️ No se procesaron mensajes del webhook');
       }
 
-      // Solo enviar OK si no se ha enviado respuesta ya
-      if (!res.headersSent) {
-        res.setHeader('Content-Type', 'text/plain');
-        res.status(200).send('OK');
-      }
+      // NO enviar OK aquí - el index.js ya maneja la respuesta
     } catch (error) {
       logger.error('❌ Error procesando webhook:', error);
       next(error);
