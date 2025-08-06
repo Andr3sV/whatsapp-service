@@ -310,14 +310,7 @@ class WhatsAppController {
         });
       }
 
-      // Verificar si es un mensaje entrante real (no solo status update)
-      const isIncomingMessage = webhookData.SmsStatus === 'received' && webhookData.Body;
-      
-      if (!isIncomingMessage) {
-        logger.info('ℹ️ Webhook de status update, no mensaje entrante');
-        res.setHeader('Content-Type', 'text/plain');
-        return res.status(200).send('OK');
-      }
+
 
       const processedMessages = twilioService.processIncomingMessage(webhookData);
       

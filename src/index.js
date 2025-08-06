@@ -112,6 +112,16 @@ app.post('/webhook', async (req, res) => {
     
     logger.info('📥 Webhook POST recibido de Twilio:', JSON.stringify(req.body, null, 2));
     
+    // Verificar si es un mensaje entrante real (no solo status update)
+    const webhookData = req.body;
+    const isIncomingMessage = webhookData.SmsStatus === 'received' && webhookData.Body;
+    
+    if (!isIncomingMessage) {
+      logger.info('ℹ️ Webhook de status update, respondiendo OK sin procesar');
+      res.setHeader('Content-Type', 'text/plain');
+      return res.status(200).send('OK');
+    }
+    
     // Procesar el mensaje usando el controlador
     const whatsappController = require('./controllers/whatsappController');
     await whatsappController.processWebhook(req, res);
