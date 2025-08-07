@@ -68,7 +68,12 @@ class WhatsAppController {
   // Enviar mensaje de texto
   async sendTextMessage(req, res, next) {
     try {
-      const { error, value } = sendMessageSchema.validate(req.body);
+      // Compatibilidad con formato de n8n (number) y formato estándar (to)
+      const body = req.body;
+      const to = body.to || body.number;
+      const text = body.text || body.message;
+      
+      const { error, value } = sendMessageSchema.validate({ to, text });
       if (error) {
         return res.status(400).json({
           success: false,
@@ -76,8 +81,7 @@ class WhatsAppController {
         });
       }
 
-      const { to, text } = value;
-      const result = await twilioService.sendTextMessage(to, text);
+      const result = await twilioService.sendTextMessage(value.to, value.text);
       
       res.status(200).json({
         success: true,
