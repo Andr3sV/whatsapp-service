@@ -2,6 +2,16 @@ const express = require('express');
 const router = express.Router();
 const whatsappController = require('../controllers/whatsappController');
 
+// Endpoint de debug temporal
+router.get('/debug-env', (req, res) => {
+  res.json({
+    accountSid: process.env.TWILIO_ACCOUNT_SID ? 'Configurado' : 'NO CONFIGURADO',
+    authToken: process.env.TWILIO_AUTH_TOKEN ? 'Configurado' : 'NO CONFIGURADO',
+    whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER || 'NO CONFIGURADO',
+    messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID || 'NO CONFIGURADO'
+  });
+});
+
 // Endpoint de compatibilidad para n8n (redirige a send/text)
 router.post('/messages', whatsappController.sendTextMessage);
 
