@@ -16,7 +16,7 @@ class TwilioService {
     this.client = twilio(this.accountSid, this.authToken);
   }
 
-  async sendTextMessage(to, text) {
+  async sendTextMessage(to, text, options = {}) {
     try {
       const messageData = {
         body: text,
@@ -24,8 +24,10 @@ class TwilioService {
       };
 
       // Usar Messaging Service SID si está disponible
-      if (this.messagingServiceSid) {
-        messageData.messagingServiceSid = this.messagingServiceSid;
+      const overrideMessagingServiceSid = options.messagingServiceSid;
+      const messagingServiceToUse = overrideMessagingServiceSid || this.messagingServiceSid;
+      if (messagingServiceToUse) {
+        messageData.messagingServiceSid = messagingServiceToUse;
       } else {
         messageData.from = `whatsapp:${this.whatsappNumber}`;
       }

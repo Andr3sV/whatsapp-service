@@ -68,25 +68,64 @@ class WhatsAppController {
   // Enviar mensaje de texto
   async sendTextMessage(req, res, next) {
     try {
-      // Compatibilidad con formato de n8n (number) y formato estándar (to)
-      const body = req.body;
-      const to = body.to || body.number;
-      const text = body.text || body.message;
-      
-      const { error, value } = sendMessageSchema.validate({ to, text });
-      if (error) {
-        return res.status(400).json({
-          success: false,
-          error: error.details[0].message
+      // 1) Autenticación opcional via Bearer
+      const configuredToken = process.env.WHATSAPP_SERVICE_TOKEN;
+      if (configuredToken) {
+        const authHeader = req.headers['authorization'] || '';
+        const provided = authHeader.startsWith('Bearer ')
+          ? authHeader.slice('Bearer '.length)
+          : '';
+        if (!provided || provided !== configuredToken) {
+          return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+      }
+
+      // 2) Payload compatible (n8n/ChatModal)
+      const body = req.body || {};
+      let to = body.to || body.number;
+      const text = body.text || body.body || body.message;
+      const workspaceId = body.workspace_id || body.workspaceId;
+      const messageId = body.metadata?.message_id || body.message_id;
+
+      // 3) Validaciones mínimas
+      if (!to || !text) {
+        return res.status(400).json({ success: false, error: 'Campos requeridos: to y text' });
+      }
+
+      // 4) Validación de workspaces permitidos (opcional)
+      const enabledWs = process.env.WHATSAPP_ENABLED_WORKSPACES;
+      if (enabledWs) {
+        const allowed = new Set(String(enabledWs).split(',').map(s => s.trim()).filter(Boolean));
+        if (!workspaceId || !allowed.has(String(workspaceId))) {
+          return res.status(403).json({ success: false, error: 'Workspace no permitido' });
+        }
+      }
+
+      // 5) Idempotencia por message_id (opcional)
+      const idempotency = require('../utils/idempotency');
+      if (messageId && idempotency.isDuplicate(messageId)) {
+        return res.status(200).json({
+          success: true,
+          duplicate_ignored: true,
+          workspace_id: workspaceId || null,
+          message_id: messageId
         });
       }
 
-      const result = await twilioService.sendTextMessage(value.to, value.text);
-      
-      res.status(200).json({
+      // 6) Normalización E.164 y selección de SID por workspace
+      to = normalizeToE164(to);
+      const messagingServiceSid = getMessagingServiceSidForWorkspace(workspaceId);
+
+      const result = await twilioService.sendTextMessage(to, text, { messagingServiceSid });
+
+      if (messageId) idempotency.markProcessed(messageId);
+
+      return res.status(200).json({
         success: true,
-        data: result,
-        message: 'Mensaje enviado exitosamente'
+        status: result.status,
+        twilio_sid: result.messageId,
+        workspace_id: workspaceId || null,
+        message_id: messageId || null
       });
     } catch (error) {
       next(error);
@@ -484,6 +523,40 @@ class WhatsAppController {
       next(error);
     }
   }
+}
+
+// ---------- helpers locales ----------
+function normalizeToE164(input) {
+  if (!input) return input;
+  let value = String(input).trim();
+  if (value.startsWith('whatsapp:')) value = value.slice('whatsapp:'.length);
+  value = value.replace(/[^\d+]/g, '');
+  if (!value.startsWith('+')) value = `+${value}`;
+  return value;
+}
+
+function getMessagingServiceSidForWorkspace(workspaceId) {
+  if (!workspaceId) {
+    return (
+      process.env.TWILIO_MESSAGING_SERVICE_SID__DEFAULT ||
+      process.env.TWILIO_MESSAGING_SERVICE_SID_DEFAULT ||
+      process.env.TWILIO_MESSAGING_SERVICE_SID ||
+      undefined
+    );
+  }
+  const candidates = [
+    `TWILIO_MESSAGING_SERVICE_SID__${workspaceId}`,
+    `TWILIO_MESSAGING_SERVICE_SID_${workspaceId}`,
+  ];
+  for (const key of candidates) {
+    if (process.env[key]) return process.env[key];
+  }
+  return (
+    process.env.TWILIO_MESSAGING_SERVICE_SID__DEFAULT ||
+    process.env.TWILIO_MESSAGING_SERVICE_SID_DEFAULT ||
+    process.env.TWILIO_MESSAGING_SERVICE_SID ||
+    undefined
+  );
 }
 
 module.exports = new WhatsAppController(); 
