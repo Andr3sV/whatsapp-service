@@ -23,14 +23,18 @@ class TwilioService {
         to: this.formatWhatsAppNumber(to)
       };
 
-      // Usar Messaging Service SID si está disponible
+      // Determinar estrategia de envío
+      // - Si nos pasan un whatsappNumber específico del workspace, PRIORITIZAMOS usar `from`
+      //   para forzar ese remitente y evitamos el Messaging Service (que elegiría desde su pool).
+      // - Si no hay override, usamos el Messaging Service si está configurado; en caso contrario, `from` por defecto.
       const overrideMessagingServiceSid = options.messagingServiceSid;
-      const messagingServiceToUse = overrideMessagingServiceSid || this.messagingServiceSid;
-      
-      // Usar número específico del workspace si está disponible
       const overrideWhatsAppNumber = options.whatsappNumber;
+
       const whatsappNumberToUse = overrideWhatsAppNumber || this.whatsappNumber;
-      
+
+      // Si viene un número específico del workspace, no usar Messaging Service para que Twilio respete el `from`
+      const messagingServiceToUse = overrideWhatsAppNumber ? null : (overrideMessagingServiceSid || this.messagingServiceSid);
+
       if (messagingServiceToUse) {
         messageData.messagingServiceSid = messagingServiceToUse;
       } else {
@@ -38,7 +42,13 @@ class TwilioService {
       }
 
       const message = await this.client.messages.create(messageData);
-      
+
+      try {
+        const debugFrom = messageData.from ? messageData.from.replace('whatsapp:', '') : '(via Messaging Service)';
+        const debugMs = messageData.messagingServiceSid || 'none';
+        logger.info(`📤 Envío WhatsApp → to=${to} | workspace_from=${whatsappNumberToUse} | from_used=${debugFrom} | ms_sid=${debugMs}`);
+      } catch (_) {}
+
       logger.info(`Mensaje de texto enviado a ${to}: ${text}`);
       return {
         success: true,
