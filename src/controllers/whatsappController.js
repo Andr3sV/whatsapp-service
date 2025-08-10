@@ -115,8 +115,12 @@ class WhatsAppController {
       // 6) Normalización E.164 y selección de SID por workspace
       to = normalizeToE164(to);
       const messagingServiceSid = getMessagingServiceSidForWorkspace(workspaceId);
+      const whatsappNumber = getWhatsAppNumberForWorkspace(workspaceId);
 
-      const result = await twilioService.sendTextMessage(to, text, { messagingServiceSid });
+      const result = await twilioService.sendTextMessage(to, text, { 
+        messagingServiceSid,
+        whatsappNumber 
+      });
 
       if (messageId) idempotency.markProcessed(messageId);
 
@@ -372,7 +376,7 @@ class WhatsAppController {
 
           // Enviar a n8n para procesamiento
           try {
-            const n8nResult = await webhookRouter.sendToN8n(message.from, message);
+            const n8nResult = await webhookRouter.sendToN8n(message.to, message);
             if (n8nResult.success) {
               logger.info(`✅ Mensaje enviado a n8n exitosamente`);
             } else {
@@ -557,6 +561,25 @@ function getMessagingServiceSidForWorkspace(workspaceId) {
     process.env.TWILIO_MESSAGING_SERVICE_SID ||
     undefined
   );
+}
+
+function getWhatsAppNumberForWorkspace(workspaceId) {
+  if (!workspaceId) {
+    return process.env.TWILIO_WHATSAPP_NUMBER;
+  }
+  
+  // Buscar número específico para el workspace
+  const candidates = [
+    `TWILIO_WHATSAPP_NUMBER__${workspaceId}`,
+    `TWILIO_WHATSAPP_NUMBER_${workspaceId}`,
+  ];
+  
+  for (const key of candidates) {
+    if (process.env[key]) return process.env[key];
+  }
+  
+  // Si no hay número específico, usar el por defecto
+  return process.env.TWILIO_WHATSAPP_NUMBER;
 }
 
 module.exports = new WhatsAppController(); 

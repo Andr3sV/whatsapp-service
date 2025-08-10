@@ -26,10 +26,15 @@ class TwilioService {
       // Usar Messaging Service SID si está disponible
       const overrideMessagingServiceSid = options.messagingServiceSid;
       const messagingServiceToUse = overrideMessagingServiceSid || this.messagingServiceSid;
+      
+      // Usar número específico del workspace si está disponible
+      const overrideWhatsAppNumber = options.whatsappNumber;
+      const whatsappNumberToUse = overrideWhatsAppNumber || this.whatsappNumber;
+      
       if (messagingServiceToUse) {
         messageData.messagingServiceSid = messagingServiceToUse;
       } else {
-        messageData.from = `whatsapp:${this.whatsappNumber}`;
+        messageData.from = `whatsapp:${whatsappNumberToUse}`;
       }
 
       const message = await this.client.messages.create(messageData);

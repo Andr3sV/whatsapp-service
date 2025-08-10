@@ -85,6 +85,62 @@ class WebhookRouter {
     return null;
   }
 
+  // Determinar el workspace basado en el número de teléfono
+  getWorkspaceForNumber(phoneNumber) {
+    const cleanNumber = phoneNumber.replace('whatsapp:', '');
+    
+    // Buscar en la configuración de workspaces
+    const enabledWorkspaces = process.env.WHATSAPP_ENABLED_WORKSPACES;
+    if (enabledWorkspaces) {
+      const workspaces = enabledWorkspaces.split(',').map(w => w.trim());
+      
+      for (const workspaceId of workspaces) {
+        const workspaceNumber = process.env[`TWILIO_WHATSAPP_NUMBER__${workspaceId}`] || 
+                               process.env[`TWILIO_WHATSAPP_NUMBER_${workspaceId}`];
+        
+        if (workspaceNumber === cleanNumber) {
+          return {
+            workspace_id: workspaceId,
+            workspace_name: process.env[`WHATSAPP_WORKSPACE_NAME__${workspaceId}`] || `Workspace ${workspaceId}`
+          };
+        }
+      }
+    }
+    
+    // Si no se encuentra, usar el workspace por defecto
+    return {
+      workspace_id: '1',
+      workspace_name: 'Default'
+    };
+  }
+
+  // Obtener webhook específico para un workspace
+  getWebhookForWorkspace(workspaceId) {
+    const webhookUrl = process.env[`N8N_WEBHOOK_WORKSPACE_${workspaceId}_URL`];
+    const webhookName = process.env[`N8N_WEBHOOK_WORKSPACE_${workspaceId}_NAME`] || `Workspace ${workspaceId}`;
+    const enabled = process.env[`N8N_WEBHOOK_WORKSPACE_${workspaceId}_ENABLED`] !== 'false';
+
+    if (webhookUrl && enabled) {
+      return {
+        url: webhookUrl,
+        name: webhookName,
+        enabled: true
+      };
+    }
+
+    // Si no hay webhook específico, usar el por defecto
+    const defaultWebhook = process.env.N8N_DEFAULT_WEBHOOK_URL;
+    if (defaultWebhook) {
+      return {
+        url: defaultWebhook,
+        name: 'default',
+        enabled: true
+      };
+    }
+
+    return null;
+  }
+
   // Enviar mensaje a n8n
   async sendToN8n(phoneNumber, messageData) {
     try {
@@ -94,11 +150,12 @@ class WebhookRouter {
         return { success: true, skipped: true, reason: 'already_processed' };
       }
 
-      const webhookConfig = this.getWebhookForNumber(phoneNumber);
+      const workspaceInfo = this.getWorkspaceForNumber(phoneNumber);
+      const webhookConfig = this.getWebhookForWorkspace(workspaceInfo.workspace_id);
 
       if (!webhookConfig) {
-        logger.warn(`⚠️ No hay webhook configurado para ${phoneNumber}`);
-        return { success: false, error: 'No webhook configured' };
+        logger.warn(`⚠️ No hay webhook configurado para workspace ${workspaceInfo.workspace_id}`);
+        return { success: false, error: 'No webhook configured for workspace' };
       }
 
       // Preparar datos para n8n
@@ -107,10 +164,11 @@ class WebhookRouter {
         message: messageData,
         timestamp: new Date().toISOString(),
         webhookName: webhookConfig.name,
-        source: 'whatsapp-service'
+        source: 'whatsapp-service',
+        workspace: workspaceInfo
       };
 
-      logger.info(`📤 Enviando a n8n (${webhookConfig.name}): ${phoneNumber}`);
+      logger.info(`📤 Enviando a n8n (${webhookConfig.name}) - Workspace: ${workspaceInfo.workspace_name} (${workspaceInfo.workspace_id})`);
 
       const response = await axios.post(webhookConfig.url, n8nPayload, {
         headers: {
