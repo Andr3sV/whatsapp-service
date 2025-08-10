@@ -86,6 +86,8 @@ class WhatsAppController {
       const text = body.text || body.body || body.message;
       const workspaceId = body.workspace_id || body.workspaceId;
       const messageId = body.metadata?.message_id || body.message_id;
+      // Permitir override explícito del número de negocio para responder
+      const businessNumberOverrideRaw = body.business_number || body.businessNumber || body.from_number || body.fromNumber || body.from;
 
       // 3) Validaciones mínimas
       if (!to || !text) {
@@ -115,7 +117,13 @@ class WhatsAppController {
       // 6) Normalización E.164 y selección de SID por workspace
       to = normalizeToE164(to);
       const messagingServiceSid = getMessagingServiceSidForWorkspace(workspaceId);
-      const whatsappNumber = getWhatsAppNumberForWorkspace(workspaceId);
+      const whatsappNumber = businessNumberOverrideRaw
+        ? normalizeToE164(businessNumberOverrideRaw)
+        : getWhatsAppNumberForWorkspace(workspaceId);
+
+      if (businessNumberOverrideRaw) {
+        logger.info(`🧭 Override de business_number recibido. Usando remitente: ${whatsappNumber}`);
+      }
 
       const result = await twilioService.sendTextMessage(to, text, { 
         messagingServiceSid,
