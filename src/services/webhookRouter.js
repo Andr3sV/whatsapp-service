@@ -89,10 +89,24 @@ class WebhookRouter {
   getWorkspaceForNumber(phoneNumber) {
     const cleanNumber = phoneNumber.replace('whatsapp:', '');
     
-    // Buscar en la configuración de workspaces
+    // 1) Mapeo explícito por número (toma prioridad)
+    // Permite resolver colisiones cuando varios workspaces comparten número
+    const explicitWorkspaceId = process.env[`WHATSAPP_NUMBER_PRIMARY_WORKSPACE__${cleanNumber}`]
+      || process.env[`WHATSAPP_NUMBER_TO_WORKSPACE__${cleanNumber}`]
+      || process.env[`WHATSAPP_NUMBER_WORKSPACE__${cleanNumber}`];
+
+    if (explicitWorkspaceId) {
+      const workspaceName = process.env[`WHATSAPP_WORKSPACE_NAME__${explicitWorkspaceId}`] || `Workspace ${explicitWorkspaceId}`;
+      return {
+        workspace_id: String(explicitWorkspaceId),
+        workspace_name: workspaceName
+      };
+    }
+    
+    // 2) Buscar en la configuración de workspaces (primer match en el orden de WHATSAPP_ENABLED_WORKSPACES)
     const enabledWorkspaces = process.env.WHATSAPP_ENABLED_WORKSPACES;
     if (enabledWorkspaces) {
-      const workspaces = enabledWorkspaces.split(',').map(w => w.trim());
+      const workspaces = enabledWorkspaces.split(',').map(w => w.trim()).filter(Boolean);
       
       for (const workspaceId of workspaces) {
         const workspaceNumber = process.env[`TWILIO_WHATSAPP_NUMBER__${workspaceId}`] || 
@@ -107,7 +121,7 @@ class WebhookRouter {
       }
     }
     
-    // Si no se encuentra, usar el workspace por defecto
+    // 3) Si no se encuentra, usar el workspace por defecto
     return {
       workspace_id: '1',
       workspace_name: 'Default'
