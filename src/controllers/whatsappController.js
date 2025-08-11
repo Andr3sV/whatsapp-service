@@ -384,7 +384,7 @@ class WhatsAppController {
 
           // Enviar a n8n para procesamiento
           try {
-            const n8nResult = await webhookRouter.sendToN8n(message.from, message);
+            const n8nResult = await webhookRouter.sendToN8n(message.to, message);
             if (n8nResult.success) {
               logger.info(`✅ Mensaje enviado a n8n exitosamente`);
             } else {
